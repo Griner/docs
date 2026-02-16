@@ -1,13 +1,15 @@
 ---
 title: Назначение привилегий и ролей пользователям PostgreSQL
-description: Атомарные полномочия в PostgreSQL называются привилегиями, группы полномочий — ролями. Подробнее об организации прав доступа читайте в документации PostgreSQL. Пользователь, создаваемый вместе с кластером {{ mpg-name }}, является владельцем первой базы данных в кластере. Вы можете создавать других пользователей и настраивать их права по своему усмотрению.
+description: '{{ PG }} управляет правами доступа к базе данных с помощью ролей. Роли могут владеть объектами базы данных и иметь привилегии. Пользователь в {{ PG }} — это роль, которая может авторизоваться в базе данных. Подробнее об организации прав доступа читайте в документации PostgreSQL. Пользователь, создаваемый вместе с кластером {{ mpg-name }}, является владельцем первой базы данных в кластере. Вы можете создавать других пользователей и настраивать их права по своему усмотрению.'
 ---
 
 # Назначение привилегий и ролей пользователям {{ PG }}
 
-Атомарные полномочия в **{{ PG }}** называются _привилегиями_, группы полномочий — _ролями_. Подробнее об организации прав доступа читайте в [документации {{ PG }}](https://www.postgresql.org/docs/current/user-manag.html).
+{{ PG }} управляет правами доступа к базе данных с помощью _ролей_. Роли могут владеть объектами базы данных и иметь _привилегии_.
 
-Пользователь, создаваемый вместе с кластером **{{ ui-key.yacloud.iam.folder.dashboard.label_managed-postgresql }}**, является владельцем первой базы данных в кластере. Вы можете [создавать других пользователей](cluster-users.md#adduser) и настраивать их права по своему усмотрению:
+Пользователь в {{ PG }} — это роль, которая может авторизоваться в базе данных. Пользователь, создаваемый вместе с кластером {{ mpg-name }}, является владельцем первой базы данных в кластере. 
+
+Вы можете [создавать других пользователей](cluster-users.md#adduser) и настраивать их права по своему усмотрению:
 
 - [Изменить список ролей пользователя](#grant-role).
 - [Выдать привилегию пользователю](#grant-privilege).
@@ -15,17 +17,20 @@ description: Атомарные полномочия в PostgreSQL называ�
 
 {% include [public-privilege](../../_includes/mdb/mpg/public-privilege.md) %}
 
+Подробнее о [создании пользователей](https://www.postgresql.org/docs/current/sql-createuser.html) и [организации прав доступа](https://www.postgresql.org/docs/current/user-manag.html) в документации {{ PG }}.
+
 ## Изменить список ролей пользователя {#grant-role}
 
 Для назначения роли пользователю используйте интерфейсы {{ yandex-cloud }}: назначение роли запросом `GRANT` отменится при следующей операции с базой.
+
+{% include [users-and-roles](../../_includes/mdb/mpg/users-and-roles.md) %}
 
 Сервис {{ mpg-name }} не дает доступа к [предопределенным ролям](https://www.postgresql.org/docs/current/predefined-roles.html), в том числе к роли суперпользователя. Назначить пользователю можно только специальные роли:
 
 * `mdb_admin`
 * `mdb_monitor`
 * `mdb_replication`
-
-Максимальные привилегии при работе с кластером имеет пользователь с [ролью](../concepts/roles.md#mdb-admin) `mdb_admin`. Подробнее см. в разделе [Назначение ролей](../concepts/roles.md).
+* `mdb_superuser`
 
 {% note info %}
 
@@ -37,7 +42,7 @@ description: Атомарные полномочия в PostgreSQL называ�
 
 - Консоль управления {#console}
 
-  1. Перейдите на страницу каталога и выберите сервис **{{ ui-key.yacloud.iam.folder.dashboard.label_managed-postgresql }}**.
+  1. [Перейдите](../../console/operations/select-service.md#select-service) в сервис **{{ ui-key.yacloud.iam.folder.dashboard.label_managed-postgresql }}**.
   1. Нажмите на имя нужного кластера и выберите вкладку **{{ ui-key.yacloud.postgresql.cluster.switch_users }}**.
   1. В строке с именем нужного пользователя нажмите на значок ![image](../../_assets/console-icons/ellipsis.svg) и выберите пункт **{{ ui-key.yacloud.mdb.cluster.users.button_action-update }}**.
   1. Разверните список **{{ ui-key.yacloud.mdb.dialogs.button_advanced-settings }}** и в поле **Grants** выберите роли, которые хотите назначить пользователю.
@@ -55,7 +60,7 @@ description: Атомарные полномочия в PostgreSQL называ�
 
   ```bash
   {{ yc-mdb-pg }} user update <имя_пользователя> \
-         --grants=<роль1,роль2> \
+         --grants=<роль1>,<роль2> \
          --cluster-id <идентификатор_кластера>
   ```
 
@@ -97,7 +102,7 @@ description: Атомарные полномочия в PostgreSQL называ�
 
      {% include [api-auth-token](../../_includes/mdb/api-auth-token.md) %}
 
-  1. Чтобы проверить список текущих ролей, воспользуйтесь методом [User.get](../api-ref/User/get.md) и выполните запрос, например, с помощью {{ api-examples.rest.tool }}:
+  1. Чтобы проверить список текущих ролей, воспользуйтесь методом [User.Get](../api-ref/User/get.md) и выполните запрос, например, с помощью {{ api-examples.rest.tool }}:
 
      ```bash
      curl \
@@ -110,7 +115,7 @@ description: Атомарные полномочия в PostgreSQL называ�
 
      Список текущих ролей указан в параметре `grants` в выводе команды.
 
-  1. Чтобы изменить список ролей пользователя, воспользуйтесь методом [User.update](../api-ref/User/update.md) и выполните запрос:
+  1. Чтобы изменить список ролей пользователя, воспользуйтесь методом [User.Update](../api-ref/User/update.md) и выполните запрос:
 
      {% include [note-updatemask](../../_includes/note-api-updatemask.md) %}
 
@@ -141,7 +146,7 @@ description: Атомарные полномочия в PostgreSQL называ�
        * `mdb_replication`
        * `mdb_superuser`
 
-  1. Убедитесь, что запрос был выполнен успешно, изучив [ответ сервера](../api-ref/User/update.md#responses).
+  1. Убедитесь, что запрос был выполнен успешно, изучив [ответ сервера](../api-ref/User/update.md#yandex.cloud.operation.Operation).
 
 - gRPC API {#grpc-api}
 
@@ -150,7 +155,7 @@ description: Атомарные полномочия в PostgreSQL называ�
      {% include [api-auth-token](../../_includes/mdb/api-auth-token.md) %}
 
   1. {% include [grpc-api-setup-repo](../../_includes/mdb/grpc-api-setup-repo.md) %}
-  1. Чтобы проверить список текущих ролей, воспользуйтесь вызовом [UserService/Get](../api-ref/grpc/User/get.md) и выполните запрос, например, с помощью {{ api-examples.grpc.tool }}:
+  1. Чтобы проверить список текущих ролей, воспользуйтесь вызовом [UserService.Get](../api-ref/grpc/User/get.md) и выполните запрос, например, с помощью {{ api-examples.grpc.tool }}:
 
      ```bash
      grpcurl \
@@ -169,7 +174,7 @@ description: Атомарные полномочия в PostgreSQL называ�
 
      Список текущих ролей указан в параметре `grants` в выводе команды.
 
-  1. Чтобы изменить список ролей пользователя, воспользуйтесь вызовом [UserService/Update](../api-ref/grpc/User/update.md) и выполните запрос:
+  1. Чтобы изменить список ролей пользователя, воспользуйтесь вызовом [UserService.Update](../api-ref/grpc/User/update.md) и выполните запрос:
 
      {% include [note-grpc-updatemask](../../_includes/note-grpc-api-updatemask.md) %}
 
@@ -211,7 +216,7 @@ description: Атомарные полномочия в PostgreSQL называ�
 
      Идентификатор кластера можно запросить со [списком кластеров в каталоге](cluster-list.md#list-clusters), а имя пользователя — со [списком пользователей в кластере](cluster-users.md#list-users).
 
-  1. Убедитесь, что запрос был выполнен успешно, изучив [ответ сервера](../api-ref/grpc/User/create.md#yandex.cloud.operation.Operation).
+  1. Убедитесь, что запрос был выполнен успешно, изучив [ответ сервера](../api-ref/grpc/User/update.md#yandex.cloud.operation.Operation).
 
 {% endlist %}
 
@@ -226,8 +231,12 @@ description: Атомарные полномочия в PostgreSQL называ�
 
 - {{ TF }} {#tf}
 
+    {% note warning %}
+
     Выдать привилегию пользователю через {{ TF }} можно только в кластере с хостами в публичном доступе.
 
+    {% endnote %}
+  
     Вы можете выдавать привилегии пользователям через {{ TF }}, используя сторонний провайдер — [Terraform Provider for PostgreSQL](https://github.com/cyrilgdn/terraform-provider-postgresql).
 
     {% include [pg-provider-disclaimer](../../_includes/mdb/mpg/terraform/pg-provider-disclaimer.md) %}
